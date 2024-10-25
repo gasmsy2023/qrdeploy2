@@ -20,6 +20,25 @@
             <p class="card-text"><strong>Date de Délivrance:</strong> {{ student.issue_date|date:"d F Y" }}</p>
         </div>
     </div>
+    
+    <!-- Debug Information -->
+    {% if debug_info %}
+    <div class="card mt-4">
+        <div class="card-header bg-info text-white">
+            Debug Information
+        </div>
+        <div class="card-body">
+            <p><strong>Student ID:</strong> {{ debug_info.student_id }}</p>
+            <h6>Student Data:</h6>
+            <ul>
+                {% for key, value in debug_info.student_data.items %}
+                    <li><strong>{{ key }}:</strong> {{ value }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="mt-4">
         <a href="{% url 'certifications:verify' student.id %}" class="btn btn-primary">Vérifier le Certificat</a>
     </div>

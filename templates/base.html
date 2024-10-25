@@ -35,23 +35,27 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'certifications:index' %}">View Students</a>
                     </li>
-                   
-                    
-                    <!-- <li class="nav-item">
-                        <a class="nav-link" href="{% url 'certifications:manage_templates' %}">Manage Templates</a>
-                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'certifications:list_issuers' %}">Issuers</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'admin:index' %}">Admin</a>
-                    </li> -->
+                        <a class="nav-link" href="{% url 'certifications:create_issuer' %}">Create Issuer</a>
+                    </li>
                 </ul>
             </div>
         </div>
     </nav>
 
     <div class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
         {% block content %}
         {% endblock %}
     </div>

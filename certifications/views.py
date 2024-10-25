@@ -3,6 +3,7 @@ import csv
 import qrcode
 import zipfile
 import os
+from datetime import datetime
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, FileResponse
 from django.conf import settings
@@ -11,6 +12,7 @@ from django.contrib import messages
 from django.core.files.base import ContentFile
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.files.storage import default_storage
+from django.urls import reverse
 from certifications.models import Student, QRCodeCustomization, Issuer, CertificateTemplate, CSVUpload, SampleCSV
 from certifications.forms import CertificateTemplateForm, IssuerForm, StudentForm, CSVUploadForm
 from PIL import Image
@@ -33,6 +35,19 @@ def index(request):
         students = paginator.page(paginator.num_pages)
 
     return render(request, 'index.html', {'students': students})
+
+def regenerate_all_qr_codes(request):
+    """View to regenerate QR codes for all students"""
+    students = Student.objects.all()
+    count = 0
+    for student in students:
+        qr_code_url = generate_qr_code(student.id)
+        student.qr_code_link = qr_code_url
+        student.save()
+        count += 1
+    
+    messages.success(request, f'Successfully regenerated QR codes for {count} students.')
+    return redirect('certifications:index')
 
 def download_sample_csv(request):
     # Create a new CSV file in memory
@@ -59,7 +74,12 @@ def generate_qr_code(student_id):
         box_size=10,
         border=4,
     )
-    qr.add_data(f"{settings.BASE_URL}/certificate/student-qr-info/{student_id}/")
+    
+    # Get the relative URL using reverse
+    relative_url = reverse('certifications:student_qr_info', args=[student_id])
+    # Combine BASE_URL with 'certificate' prefix and the relative URL
+    student_url = f"{settings.BASE_URL.rstrip('/')}/certificate{relative_url}"
+    qr.add_data(student_url)
     qr.make(fit=True)
 
     qr_img = qr.make_image(fill_color=qr_customization.foreground_color, back_color=qr_customization.background_color)
@@ -82,6 +102,23 @@ def generate_qr_code(student_id):
     # Return the full URL for the QR code
     return f"{settings.BASE_URL}{settings.MEDIA_URL}{qr_code_path}"
 
+def convert_date_format(date_str):
+    """Convert date from DD/MM/YYYY to YYYY-MM-DD format"""
+    if not date_str:
+        return None
+    try:
+        # Parse the date string in DD/MM/YYYY format
+        date_obj = datetime.strptime(date_str.strip(), '%d/%m/%Y')
+        # Convert to YYYY-MM-DD format
+        return date_obj.strftime('%Y-%m-%d')
+    except ValueError:
+        try:
+            # Try parsing as YYYY-MM-DD in case it's already in the correct format
+            datetime.strptime(date_str.strip(), '%Y-%m-%d')
+            return date_str.strip()
+        except ValueError:
+            return None
+
 def upload_csv(request):
     if request.method == 'POST':
         if 'csv_file' not in request.FILES:
@@ -94,8 +131,22 @@ def upload_csv(request):
             return redirect('certifications:upload_csv')
 
         try:
-            # Read the CSV file
-            decoded_file = csv_file.read().decode('utf-8')
+            # Try different encodings
+            encodings = ['utf-8-sig', 'latin-1', 'cp1252', 'iso-8859-1']
+            decoded_file = None
+            
+            for encoding in encodings:
+                try:
+                    csv_file.seek(0)  # Reset file pointer
+                    decoded_file = csv_file.read().decode(encoding)
+                    break
+                except UnicodeDecodeError:
+                    continue
+            
+            if decoded_file is None:
+                messages.error(request, 'Unable to decode CSV file. Please ensure it is properly encoded.')
+                return redirect('certifications:upload_csv')
+
             csv_data = csv.DictReader(io.StringIO(decoded_file))
             
             success_count = 0
@@ -107,27 +158,41 @@ def upload_csv(request):
                 for row in csv_data:
                     try:
                         # Check if student with this matricule already exists
-                        matricule = row['matricule']
+                        matricule = row.get('matricule', '').strip()
+                        if not matricule:
+                            error_count += 1
+                            error_messages.append(f"Error in row {success_count + error_count + skip_count}: Missing matricule")
+                            continue
+
                         if Student.objects.filter(matricule=matricule).exists():
                             skip_count += 1
                             continue
 
                         # Get or create issuer
+                        issuer_name = row.get('issuer_name_en', '').strip()
+                        if not issuer_name:
+                            error_count += 1
+                            error_messages.append(f"Error in row {success_count + error_count + skip_count}: Missing issuer name")
+                            continue
+
                         issuer, _ = Issuer.objects.get_or_create(
-                            name_en=row['issuer_name_en']
+                            name_en=issuer_name
                         )
+
+                        # Convert date format
+                        date_de_naissance = convert_date_format(row.get('date_de_naissance', '').strip())
 
                         # Create student record
                         student = Student.objects.create(
-                            noms_et_prenoms=row['noms_et_prenoms'],
+                            noms_et_prenoms=row.get('noms_et_prenoms', '').strip(),
                             matricule=matricule,
-                            filiere=row['filiere'],
-                            mention=row['mention'],
-                            session=row.get('session', ''),
-                            sexe=row.get('sexe', ''),
-                            date_de_naissance=row.get('date_de_naissance', None),
-                            lieu_de_naissance=row.get('lieu_de_naissance', ''),
-                            numero=row.get('numero', ''),
+                            filiere=row.get('filiere', '').strip(),
+                            mention=row.get('mention', '').strip(),
+                            session=row.get('session', '').strip(),
+                            sexe=row.get('sexe', '').strip(),
+                            date_de_naissance=date_de_naissance,
+                            lieu_de_naissance=row.get('lieu_de_naissance', '').strip(),
+                            numero=row.get('numero', '').strip(),
                             issuer=issuer
                         )
                         
@@ -166,8 +231,25 @@ def verify(request, student_id):
 
 def student_qr_info(request, student_id):
     student = get_object_or_404(Student, id=student_id)
+    # Add debug information to context
     context = {
         'student': student,
+        'debug_info': {
+            'student_id': student_id,
+            'student_data': {
+                'noms_et_prenoms': student.noms_et_prenoms,
+                'matricule': student.matricule,
+                'filiere': student.filiere,
+                'mention': student.mention,
+                'session': student.session,
+                'sexe': student.sexe,
+                'date_de_naissance': student.date_de_naissance,
+                'lieu_de_naissance': student.lieu_de_naissance,
+                'numero': student.numero,
+                'issuer': student.issuer.name_en if student.issuer else None,
+                'issue_date': student.issue_date,
+            }
+        }
     }
     return render(request, 'student_qr_info.html', context)
 
@@ -271,7 +353,7 @@ def create_issuer(request):
         if form.is_valid():
             issuer = form.save()
             messages.success(request, f'Issuer {issuer.name_en} created successfully.')
-            return redirect('certifications:index')
+            return redirect('certifications:list_issuers')  # Changed to redirect to issuer list
     else:
         form = IssuerForm()
     return render(request, 'issuer_form.html', {'form': form, 'action': 'Create'})
@@ -283,7 +365,7 @@ def edit_issuer(request, issuer_id):
         if form.is_valid():
             form.save()
             messages.success(request, f'Issuer {issuer.name_en} updated successfully.')
-            return redirect('certifications:index')
+            return redirect('certifications:list_issuers')  # Changed to redirect to issuer list
     else:
         form = IssuerForm(instance=issuer)
     return render(request, 'issuer_form.html', {'form': form, 'action': 'Edit'})
@@ -303,7 +385,13 @@ def verify_issuer(request, uuid):
 
 def delete_student(request, student_id):
     student = get_object_or_404(Student, id=student_id)
-    if request.method == 'POST':
+    
+    # For GET requests, show the confirmation page
+    if request.method == 'GET':
+        return render(request, 'student_confirm_delete.html', {'student': student})
+    
+    # For POST requests, perform the deletion
+    elif request.method == 'POST':
         # Delete the QR code file if it exists
         if student.qr_code_link:
             qr_code_path = f'qr_codes/student_{student.id}.png'
@@ -312,4 +400,3 @@ def delete_student(request, student_id):
         student.delete()
         messages.success(request, f'Student record deleted for {student.noms_et_prenoms}')
         return redirect('certifications:index')
-    return render(request, 'student_confirm_delete.html', {'student': student})

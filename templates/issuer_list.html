@@ -3,32 +3,45 @@
 {% block title %}Issuers List{% endblock %}
 
 {% block content %}
-<h1>Issuers List</h1>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Name (English)</th>
-            <th>Name (French)</th>
-            
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for issuer in issuers %}
-        <tr>
-            <td>{{ issuer.name_en }}</td>
-            <td>{{ issuer.name_ar }}</td>
-            <td><a href="{{ issuer.url }}" target="_blank">{{ issuer.url }}</a></td>
-            <td>
-                <a href="{% url 'certifications:edit_issuer' issuer.id %}" class="btn btn-sm btn-primary">Edit</a>
-            </td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="4">No issuers found.</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-<a href="{% url 'certifications:create_issuer' %}" class="btn btn-success">Add New Issuer</a>
+<div class="container mt-4">
+    <h1 class="mb-4">Issuers List</h1>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Name</th>
+                    <th>UUID</th>
+                    <th>Verification Link</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for issuer in issuers %}
+                <tr>
+                    <td>{{ issuer.name_en }}</td>
+                    <td><small class="text-muted">{{ issuer.uuid }}</small></td>
+                    <td>
+                        <a href="{{ issuer.get_verify_url }}" target="_blank" class="btn btn-sm btn-outline-info">
+                            Verify Certificates
+                        </a>
+                    </td>
+                    <td>
+                        <a href="{% url 'certifications:edit_issuer' issuer.id %}" class="btn btn-sm btn-primary">Edit</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center">No issuers found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="mt-4">
+        <a href="{% url 'certifications:create_issuer' %}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Add New Issuer
+        </a>
+    </div>
+</div>
 {% endblock %}
