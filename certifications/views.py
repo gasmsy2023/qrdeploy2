@@ -78,7 +78,7 @@ def generate_qr_code(student_id):
     # Get the relative URL using reverse
     relative_url = reverse('certifications:student_qr_info', args=[student_id])
     # Combine BASE_URL with 'certificate' prefix and the relative URL
-    student_url = f"{settings.BASE_URL.rstrip('/')}/certificate{relative_url}"
+    student_url = f"{settings.BASE_URL.rstrip('/')}{relative_url}"
     qr.add_data(student_url)
     qr.make(fit=True)
 
