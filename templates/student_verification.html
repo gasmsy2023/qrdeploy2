@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Vérification d'Étudiant{% endblock %}
+
+{% block content %}
+<h1>Vérification d'Étudiant</h1>
+<div class="student-info">
+    <h2>{{ student.noms_et_prenoms }}</h2>
+    <p><strong>Matricule:</strong> {{ student.matricule }}</p>
+    <p><strong>Filière:</strong> {{ student.filiere }}</p>
+    <p><strong>Mention:</strong> {{ student.mention }}</p>
+    <p><strong>Session:</strong> {{ student.session }}</p>
+    <p><strong>Sexe:</strong> {{ student.get_sexe_display }}</p>
+    <p><strong>Date de Naissance:</strong> {{ student.date_de_naissance|date:"d F Y" }}</p>
+    <p><strong>Lieu de Naissance:</strong> {{ student.lieu_de_naissance }}</p>
+    <p><strong>Numéro:</strong> {{ student.numero }}</p>
+    <p><strong>Issuer:</strong> {{ student.issuer.name_en }}</p>
+    <p><strong>Date de Délivrance:</strong> {{ student.issue_date|date:"d F Y" }}</p>
+</div>
+{% if student.qr_code_link %}
+<div class="qr-code">
+    <img src="{{ student.qr_code_link }}" alt="QR Code">
+</div>
+{% endif %}
+<a href="{% url 'certifications:index' %}" class="btn btn-primary">Retour à la Liste des Étudiants</a>
+{% endblock %}

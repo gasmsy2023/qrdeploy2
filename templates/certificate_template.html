@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .certificate {
+            width: 800px;
+            margin: 0 auto;
+            border: 2px solid #000;
+            padding: 20px;
+        }
+        .qr-code {
+            width: 150px;
+            height: 150px;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="certificate">
+        <h1>Certificate of Completion</h1>
+        <p>This is to certify that</p>
+        <h2>{{ certificate.name_en }}</h2>
+        <p>has successfully completed the course</p>
+        <h3>{{ certificate.course_en }}</h3>
+        <p>Course Type: {{ certificate.course_type_en }}</p>
+        <p>Specialization: {{ certificate.specialization }}</p>
+        <p>Certificate Number: {{ certificate.cert_no }}</p>
+        <p>Issue Date: {{ certificate.issue_date|date:"F d, Y" }}</p>
+        <div class="qr-code">
+            <!-- QR code will be inserted here -->
+        </div>
+        <p>Issued by: {{ certificate.issuer.name_en }}</p>
+        {% if certificate.issuer.signature %}
+        <img src="{{ certificate.issuer.signature.url }}" alt="Issuer Signature" style="width: 200px;">
+        {% endif %}
+    </div>
+</body>
+</html>

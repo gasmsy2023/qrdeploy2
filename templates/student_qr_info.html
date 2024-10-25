@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Information d'Étudiant{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Information du Certificat d'Étudiant</h1>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">{{ student.noms_et_prenoms }}</h5>
+            <p class="card-text"><strong>Matricule:</strong> {{ student.matricule }}</p>
+            <p class="card-text"><strong>Filière:</strong> {{ student.filiere }}</p>
+            <p class="card-text"><strong>Mention:</strong> {{ student.mention }}</p>
+            <p class="card-text"><strong>Session:</strong> {{ student.session }}</p>
+            <p class="card-text"><strong>Sexe:</strong> {{ student.get_sexe_display }}</p>
+            <p class="card-text"><strong>Date de Naissance:</strong> {{ student.date_de_naissance|date:"d F Y" }}</p>
+            <p class="card-text"><strong>Lieu de Naissance:</strong> {{ student.lieu_de_naissance }}</p>
+            <p class="card-text"><strong>Numéro:</strong> {{ student.numero }}</p>
+            <p class="card-text"><strong>Issuer:</strong> {{ student.issuer.name_en }}</p>
+            <p class="card-text"><strong>Date de Délivrance:</strong> {{ student.issue_date|date:"d F Y" }}</p>
+        </div>
+    </div>
+    <div class="mt-4">
+        <a href="{% url 'certifications:verify' student.id %}" class="btn btn-primary">Vérifier le Certificat</a>
+    </div>
+</div>
+{% endblock %}

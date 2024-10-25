@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Generate Certificate</h2>
+<form method="post">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="certificate">Select Certificate:</label>
+        <select name="certificate" id="certificate" class="form-control" required>
+            <option value="">-- Select a Certificate --</option>
+            {% for cert in certificates %}
+                <option value="{{ cert.id }}">{{ cert.name_en }} - {{ cert.cert_no }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="template">Select Template:</label>
+        <select name="template" id="template" class="form-control" required>
+            <option value="">-- Select a Template --</option>
+            {% for template in templates %}
+                <option value="{{ template.id }}">{{ template.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Generate Certificate</button>
+</form>
+{% endblock %}

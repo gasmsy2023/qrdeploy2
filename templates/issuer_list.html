@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Issuers List{% endblock %}
+
+{% block content %}
+<h1>Issuers List</h1>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name (English)</th>
+            <th>Name (French)</th>
+            
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for issuer in issuers %}
+        <tr>
+            <td>{{ issuer.name_en }}</td>
+            <td>{{ issuer.name_ar }}</td>
+            <td><a href="{{ issuer.url }}" target="_blank">{{ issuer.url }}</a></td>
+            <td>
+                <a href="{% url 'certifications:edit_issuer' issuer.id %}" class="btn btn-sm btn-primary">Edit</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4">No issuers found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="{% url 'certifications:create_issuer' %}" class="btn btn-success">Add New Issuer</a>
+{% endblock %}

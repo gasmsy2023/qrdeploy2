@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}All Students{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">All Students</h1>
+{% if students %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Noms et Prénoms</th>
+                    <th>Matricule</th>
+                    <th>Filière</th>
+                    <th>Mention</th>
+                    <th>Session</th>
+                    <th>Sexe</th>
+                    <th>Date de Naissance</th>
+                    <th>Lieu de Naissance</th>
+                    <th>Numéro</th>
+                    <th>Issuer</th>
+                    <th>Date de Délivrance</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td><a href="{% url 'certifications:verify' student.id %}">{{ student.noms_et_prenoms }}</a></td>
+                    <td>{{ student.matricule }}</td>
+                    <td>{{ student.filiere }}</td>
+                    <td>{{ student.mention }}</td>
+                    <td>{{ student.session }}</td>
+                    <td>{{ student.get_sexe_display }}</td>
+                    <td>{{ student.date_de_naissance|date:"Y-m-d" }}</td>
+                    <td>{{ student.lieu_de_naissance }}</td>
+                    <td>{{ student.numero }}</td>
+                    <td>{{ student.issuer.name_en }}</td>
+                    <td>{{ student.issue_date|date:"Y-m-d" }}</td>
+                    <td>
+                        <a href="{% url 'certifications:edit_student' student.id %}" class="btn btn-sm btn-primary">Update</a>
+                        <a href="{% url 'certifications:delete_student' student.id %}" class="btn btn-sm btn-danger">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if students.has_other_pages %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if students.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ students.previous_page_number }}">&laquo; Previous</a></li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">&laquo; Previous</span></li>
+            {% endif %}
+
+            {% for i in students.paginator.page_range %}
+                {% if students.number == i %}
+                    <li class="page-item active"><span class="page-link">{{ i }} <span class="sr-only">(current)</span></span></li>
+                {% else %}
+                    <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if students.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ students.next_page_number }}">Next &raquo;</a></li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Next &raquo;</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+{% else %}
+    <p>No students available.</p>
+{% endif %}
+
+<div class="mt-4">
+    <a href="{% url 'certifications:upload_csv' %}" class="btn btn-primary">Upload CSV</a>
+    <a href="{% url 'certifications:download_qr_codes' %}" class="btn btn-info">Download QR Codes</a>
+</div>
+{% endblock %}

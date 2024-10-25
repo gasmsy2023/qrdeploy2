@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Certificate Templates{% endblock %}
+
+{% block extra_styles %}
+<style>
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    th, td {
+        padding: 10px;
+        border: 1px solid #ddd;
+        text-align: left;
+    }
+    th {
+        background-color: #f4f4f4;
+    }
+    .btn {
+        display: inline-block;
+        padding: 5px 10px;
+        background-color: #007bff;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 3px;
+    }
+    .btn:hover {
+        background-color: #0056b3;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>Manage Certificate Templates</h1>
+<a href="{% url 'certifications:create_template' %}" class="btn">Create New Template</a>
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Font</th>
+            <th>Title Font Size</th>
+            <th>Body Font Size</th>
+            <th>Text Color</th>
+            <th>QR Code Position</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for template in templates %}
+        <tr>
+            <td>{{ template.name }}</td>
+            <td>{{ template.font }}</td>
+            <td>{{ template.title_font_size }}</td>
+            <td>{{ template.body_font_size }}</td>
+            <td>{{ template.text_color }}</td>
+            <td>{{ template.get_qr_code_position_display }}</td>
+            <td>
+                <a href="{% url 'certifications:edit_template' template.id %}" class="btn">Edit</a>
+                <a href="{% url 'certifications:delete_template' template.id %}" class="btn" onclick="return confirm('Are you sure you want to delete this template?')">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
